@@ -28,7 +28,7 @@ if __name__ == '__main__':
     stations = get_station_dict()
     close_stations = get_closer_station(stations, lat, lon)
 
-    for id, dist in close_stations[:5]:
+    for id, dist in close_stations[:10]:
         if stations[id]['electrical_bikes'] == 0:
             continue
         print(f"La estación {id} está a {dist:.1f} metros y tiene {stations[id]['electrical_bikes']} bicis eléctricas, Direccion: {stations[id]['streetName']}")
