@@ -10,6 +10,7 @@ packages = [{include = "bicing_utils"}]
 python = "^3.9"
 requests = "^2.28.2"
 geopy = "^2.3.0"
+python-dotenv = "^1.0.0"
 
 
 [build-system]

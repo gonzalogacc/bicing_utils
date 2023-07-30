@@ -1,5 +1,6 @@
 from get_station_info import get_stations
 from geopy import distance
+from google_maps import Marker, get_static_map
 
 def read_coordinates(coords_file: str):
     with open(coords_file, 'r') as f:
@@ -27,8 +28,16 @@ if __name__ == '__main__':
     lat, lon = read_coordinates("./coordinates.txt")
     stations = get_station_dict()
     close_stations = get_closer_station(stations, lat, lon)
-
-    for id, dist in close_stations[:10]:
+    
+    markers = []
+    for id, dist in close_stations[:20]:
         if stations[id]['electrical_bikes'] == 0:
             continue
-        print(f"La estación {id} está a {dist:.1f} metros y tiene {stations[id]['electrical_bikes']} bicis eléctricas, Direccion: {stations[id]['streetName']}")
+        ##print(f"La estación {id} está a {dist:.1f} metros y tiene {stations[id]['electrical_bikes']} bicis eléctricas, Direccion: {stations[id]['streetName']}")
+        marker = Marker(
+                lat = stations[id]["latitude"], 
+                lon=stations[id]["longitude"], 
+                label=stations[id]["electrical_bikes"]
+        )
+        markers.append(marker)
+    get_static_map(markers)
