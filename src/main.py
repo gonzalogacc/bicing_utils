@@ -1,14 +1,18 @@
-from get_station_info import get_stations
 from geopy import distance
-from google_maps import Marker, get_static_map
+
+from src.get_station_info import BicingClient
+from src.google_maps import Marker, get_static_map
+from src.schemas import Coordinates
 
 def read_coordinates(coords_file: str):
     with open(coords_file, 'r') as f:
         data = f.read().strip()
-        return data.split(',')
+        coordinates = Coordinates(lat=data.split(',')[0], lon=data.split(',')[1])
+        return coordinates
 
 def get_station_dict():
-    stations = get_stations()
+    bc = BicingClient()
+    stations = bc.get_stations()
     station_dict = {}
     for station in stations['stations']:
         station_dict[station['id']] = station
@@ -18,14 +22,13 @@ def get_closer_station(stations: {}, lat: float, lon: float):
     
     sation_distances = []
     for id, station in stations.items():
-        dd = distance.distance((lat, lon), (station['latitude'], station['longitude'])).m
+        dd = distance.distance((lat, lon), (station['latitude'], station['longitude']))
         sation_distances.append((station['id'], dd))
 
     station_distances = sorted(sation_distances, key=lambda x: x[1])
     return station_distances
 
-if __name__ == '__main__':
-    lat, lon = read_coordinates("./coordinates.txt")
+def find_bikes(lat, lon):
     stations = get_station_dict()
     close_stations = get_closer_station(stations, lat, lon)
     
@@ -40,4 +43,14 @@ if __name__ == '__main__':
                 label=stations[id]["electrical_bikes"]
         )
         markers.append(marker)
-    get_static_map(markers)
+    map = get_static_map(markers)
+    return map
+
+if __name__ == '__main__':
+    lat, lon = read_coordinates("./coordinates.txt")
+    bikes = find_bikes(lat, lon)
+
+    filename = "mapita.png"
+    with open(f'{filename}', 'wb') as outfile:
+       outfile.write(bikes)
+
