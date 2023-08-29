@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import Optional, List, Any, Annotated
 
 from pydantic import BaseModel, BeforeValidator
@@ -8,16 +9,26 @@ class Coordinates(BaseModel):
     latitude: float
     longitude: float
 
-def make_validator(label:str):
+
+def make_validator(label: str):
     def validator(v: Any, info: ValidationInfo) -> Any:
         if v == "":
             v = 0
         return v
+
     return validator
+
 
 ## Not set latlong values are converted to 0
 Latitude = Annotated[float, BeforeValidator(make_validator('check-float'))]
 Longitude = Annotated[float, BeforeValidator(make_validator('check-float'))]
+
+
+class ResourceEnum(str, Enum):
+    electrical_bikes = 'electrical_bikes'
+    mechanical_bikes = 'mechanical_bikes'
+    disponibilidad = 'disponibilidad'
+
 
 class Station(BaseModel):
     id: int
