@@ -1,3 +1,5 @@
+import os
+
 import pytest
 from httpx import Request
 from starlette.applications import Starlette
@@ -12,11 +14,12 @@ def hello(request: Request) -> PlainTextResponse:
 
 
 def stations_response(request: Request) -> JSONResponse:
-    data = json.loads(open("test/bicing_station_response.json").read())
+    data = json.loads(open(os.path.join(os.getcwd(), "bicing_stations_response.json")).read())
+    #data = json.loads(open(os.path.join(os.getcwd(), "another_test.json")).read())
     return JSONResponse(data)
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def bicing_test_API():
     app = Starlette(routes=[
         Route("/", hello),

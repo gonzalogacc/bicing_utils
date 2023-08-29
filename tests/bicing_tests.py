@@ -1,9 +1,12 @@
+import os
+
 import pytest
 
 from src.bicing import BicingClient
-from src.schemas import Station, BicingStationsResponse
+from src.schemas import Station, BicingStationsResponse, Coordinates
 import json
 from tests.test_fixtures import bicing_test_API
+
 
 def test_Station_object():
     estacion = {
@@ -56,7 +59,7 @@ def test_Station_object_no_coordinates():
 
 
 def test_BicingStationsResponse():
-    response = json.loads(open("/Users/ggarcia/git_sources/bicing_utils/tests/bicing_stations_response.json").read())
+    response = json.loads(open(os.path.join(os.getcwd(), "bicing_stations_response.json")).read())
     station_response = BicingStationsResponse(**response)
     assert len(response['stations']) == len(station_response.stations), "Wrong station number"
     assert int(response['stations'][0]['id']) == station_response.stations[0].id
@@ -65,9 +68,13 @@ def test_BicingStationsResponse():
 
 
 def test_get_sort_station_distance(bicing_test_API):
-    response = bicing_test_API.get("/")
-    print(response)
-    assert response.text == "Hello World!"
+    bc = BicingClient()
+    bc._httpx_client = bicing_test_API  ## Replace the real client for the fixture (to avoid the http request)
+    my_location = Coordinates(latitude=41.3842634, longitude=2.1692556)  ## station 51
+    stations = bc.get_sort_station_distance(my_location)
+    assert stations[0].id == 51
+    ## Distance always increases
+    assert all(x.distance <= y.distance for x, y in zip(stations, stations[1:])), "Distance is not ever increasing"
 
 
 def test_get_stations():

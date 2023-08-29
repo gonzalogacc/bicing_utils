@@ -5,8 +5,8 @@ from pydantic_core.core_schema import ValidationInfo
 
 
 class Coordinates(BaseModel):
-    lat: float
-    lon: float
+    latitude: float
+    longitude: float
 
 def make_validator(label:str):
     def validator(v: Any, info: ValidationInfo) -> Any:
@@ -36,6 +36,7 @@ class Station(BaseModel):
     icon: str
     transition_start: str
     transition_end: str
+    distance: Optional[float] = None
 
 
 class BicingStationsResponse(BaseModel):

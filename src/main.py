@@ -1,6 +1,6 @@
 from geopy import distance
 
-from src.get_station_info import BicingClient
+from src.bicing import BicingClient
 from src.google_maps import Marker, get_static_map
 from src.schemas import Coordinates
 
