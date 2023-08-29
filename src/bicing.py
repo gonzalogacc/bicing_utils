@@ -3,7 +3,7 @@ from typing import List
 import httpx
 from geopy import distance
 
-from src.schemas import Coordinates, BicingStationsResponse, Station
+from src.schemas import Coordinates, BicingStationsResponse, Station, ResourceEnum
 
 
 class BicingClient:
@@ -29,3 +29,12 @@ class BicingClient:
             )
             station.distance = dd
         return sorted(stations, key=lambda x: x.distance)
+
+    def find_closest(self, entity: ResourceEnum, coordinates: Coordinates, max_stations: int = 20) -> List[Station]:
+        all_stations = self.get_sort_station_distance(coordinates)
+        selected_stations = []
+        for station in all_stations[:max_stations]:
+            if getattr(station, entity) == 0:
+                continue
+            selected_stations.append(station)
+        return selected_stations

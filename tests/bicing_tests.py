@@ -3,7 +3,7 @@ import os
 import pytest
 
 from src.bicing import BicingClient
-from src.schemas import Station, BicingStationsResponse, Coordinates
+from src.schemas import Station, BicingStationsResponse, Coordinates, ResourceEnum
 import json
 from tests.test_fixtures import bicing_test_API
 
@@ -77,8 +77,9 @@ def test_get_sort_station_distance(bicing_test_API):
     assert all(x.distance <= y.distance for x, y in zip(stations, stations[1:])), "Distance is not ever increasing"
 
 
-def test_get_stations():
+def test_find_closest_electric_bikes(bicing_test_API):
+    my_location = Coordinates(latitude=41.3842634, longitude=2.1692556)  ## station 51
     bc = BicingClient()
-    response = bc.get_stations()
-    print(response)
-    assert 1 == 2
+    bc._httpx_client = bicing_test_API  ## Replace the real client for the fixture (to avoid the http request)
+    closest_electric_bikes = bc.find_closest(ResourceEnum.electrical_bikes, my_location)
+    assert closest_electric_bikes[0].id == 51
