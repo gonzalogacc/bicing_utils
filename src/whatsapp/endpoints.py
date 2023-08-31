@@ -41,13 +41,17 @@ async def POST_meta_hook(
     """
     print("----- META WEBHOOK -----")
     data = await request.body()
+    try:
+        print(data)
+    except:
+        return "OK", 200
 
-    publisher = pubsub_v1.PublisherClient()
-    topic_path = publisher.topic_path(PUBSUB_PROJECT_ID, PUBSUB_TOPIC_ID)
-    
-    future = publisher.publish(topic_path, data)
-    print(future.result())
-    print(f"Published messages to {topic_path}.")
+    #publisher = pubsub_v1.PublisherClient()
+    #topic_path = publisher.topic_path(PUBSUB_PROJECT_ID, PUBSUB_TOPIC_ID)
+    #
+    #future = publisher.publish(topic_path, data)
+    #print(future.result())
+    #print(f"Published messages to {topic_path}.")
     return "OK", 200
 
 
