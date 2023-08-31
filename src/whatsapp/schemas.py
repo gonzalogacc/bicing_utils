@@ -29,6 +29,16 @@ class Message(BaseModel):
     timestamp: datetime.datetime
     type: str
 
+class Location(BaseModel):
+    latitude: float
+    longitude: float
+
+class LocationMessage(BaseModel):
+    from_: str = Field(..., alias='from')
+    id: str
+    location: Location
+    timestamp: datetime.datetime
+    type: str
 
 class MessagingProductEnum(str, Enum):
     whatsapp = "whatsapp"
@@ -39,9 +49,10 @@ class MessageMetadata(BaseModel):
     phone_number_id: str
 
 
+
 class ChangeValue(BaseModel):
     contacts: List[Contact]
-    messages: List[Message]
+    messages: List[Message] | List[LocationMessage]
     messaging_product: MessagingProductEnum
     metadata: MessageMetadata
 
@@ -62,5 +73,8 @@ class WebhookObject(BaseModel):
 
 
 class LocationMessage(BaseModel):
-    ## b'{"object":"whatsapp_business_account","entry":[{"id":"104246805978102","changes":[{"value":{"messaging_product":"whatsapp","metadata":{"display_phone_number":"34623508545","phone_number_id":"102033176202052"},"contacts":[{"profile":{"name":"Gonza"},"wa_id":"447472138610"}],"messages":[{"from":"447472138610","id":"wamid.HBgMNDQ3NDcyMTM4NjEwFQIAEhgUM0FBM0UwRjlEMzA5OTQ3OTVGODEA","timestamp":"1693439799","location":{"latitude":41.381469726562,"longitude":2.1878051757812},"type":"location"}]},"field":"messages"}]}]}'
+    ## b'{"object":"whatsapp_business_account","entry":[{"id":"104246805978102","changes":[{"value":{"messaging_product":"whatsapp","metadata":{"display_phone_number":"34623508545","phone_number_id":"102033176202052"},"contacts":[{"profile":{"name":"Gonza"},"wa_id":"447472138610"}],"messages":[{"from":"447472138610","id":"wamid.HBgMNDQ3NDcyMTM4NjEwFQIAEhgUM0FEMjcwQzBBRDVENDc5NDg4NzQA","timestamp":"1693442282","location":{"latitude":41.381469726562,"longitude":2.1878051757812},"type":"location"}]},"field":"messages"}]}]}'
     pass
+## b'{"object":"whatsapp_business_account","entry":[{"id":"104246805978102","changes":[{"value":{"messaging_product":"whatsapp","metadata":{"display_phone_number":"34623508545","phone_number_id":"102033176202052"},"contacts":[{"profile":{"name":"Gonza"},"wa_id":"447472138610"}],"messages":[{"from":"447472138610","id":"wamid.HBgMNDQ3NDcyMTM4NjEwFQIAEhgUM0FBM0UwRjlEMzA5OTQ3OTVGODEA","timestamp":"1693439799","location":{"latitude":41.381469726562,"longitude":2.1878051757812},"type":"location"}]},"field":"messages"}]}]}'
+
+
