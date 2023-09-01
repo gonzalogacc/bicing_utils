@@ -1,13 +1,16 @@
 from fastapi import FastAPI, Depends, APIRouter, HTTPException, Request, BackgroundTasks
 import json
 
-from google.cloud import pubsub_v1
+# from google.cloud import pubsub_v1
 import base64
 import os
 
 import src.whatsapp.whatsapp as waf
 
 from dotenv import load_dotenv
+
+from src.whatsapp.schemas import WhatsappMessage
+
 load_dotenv()
 
 PUBSUB_PROJECT_ID = os.getenv("PUBSUB_PROJECT_ID", "bicing-prod")
@@ -42,7 +45,12 @@ async def POST_meta_hook(
     print("----- META WEBHOOK -----")
     data = await request.body()
     try:
-        print(data)
+        print("----- MESSAGE WEBHOOK -----")
+        message = WhatsappMessage(**json.loads(data))
+        print(message.entry[0].changes[0].value.messages[0].location.latitude)
+        print(message.entry[0].changes[0].value.messages[0].location.longitude)
+        print("----- MESSAGE WEBHOOK -----")
+
     except:
         return "OK", 200
 
