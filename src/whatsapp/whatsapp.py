@@ -21,13 +21,14 @@ if ACTIVE_NUMBER_ID is None:
 if META_TOKEN is None:
     raise Exception("No meta token set")
 
+
 class WhatsappClient:
 
     def __init__(self):
         self._http_client = self._make_httpx_client()
-        self.META_TOKEN = META_TOKEN
-        self.ACTIVE_NUMBER_ID = ACTIVE_NUMBER_ID
-    def _make_httpx_client(self):
+
+    @staticmethod
+    def _make_httpx_client():
         headers = {
             "Authorization": f"Bearer {META_TOKEN}",
             "Content-Type": "application/json"
@@ -38,7 +39,30 @@ class WhatsappClient:
             headers=headers
         )
 
-    def process_location_message(self, message: WhatsappMessage) -> Coordinates:
+    @staticmethod
+    def verify_webhook(query_params: QueryParams):
+        """ Endpoint to verify the webhook
+        """
+        print("----- VERIFYING WEBHOOK -----")
+        if 'hub.mode' not in query_params or \
+                'hub.challenge' not in query_params or \
+                'hub.verify_token' not in query_params:
+            print("Error: missing params")
+            return "Error", 500
+
+        mode = query_params['hub.mode']
+        challenge = int(query_params['hub.challenge'])
+        token = query_params['hub.verify_token']
+
+        ## TODO:  verif secret from secret manager
+        if mode == 'subscribe' and token == 'verif':
+            print(f'Webhook verified!!! {challenge}')
+            return challenge
+        else:
+            raise Exception()
+
+    @staticmethod
+    def process_location_message(message: WhatsappMessage) -> Coordinates:
         if message.entry[0].changes[0].value.messages[0].type != "location":
             raise WrongMessageType("Messaage is not a location")
 
@@ -52,22 +76,9 @@ class WhatsappClient:
     def send_image(self):
         return None
 
-# def POST_meta_request(url, json, add_headers={}):
-#     headers = {}
-#     headers['Authorization'] = f"Bearer {META_TOKEN}"
-#     headers['Content-Type'] = 'application/json'
-#
-#     for key, value in add_headers.items():
-#         headers[key] = value
-#
-#     response = requests.post(url, headers=headers, json=json)
-#     if response.status_code == 200:
-#         return response.json()
-#     else:
-#         raise Exception(f"Error: {response.status_code} {response.text}")
-    
+
 def upload_image(image_path):
-    #curl -X POST 'https://graph.facebook.com/v17.0/<MEDIA_ID>/media' \
+    # curl -X POST 'https://graph.facebook.com/v17.0/<MEDIA_ID>/media' \
     #    -H 'Authorization: Bearer <ACCESS_TOKEN>' \
     #    -F 'file=@"2jC60Vdjn/cross-trainers-summer-sale.jpg"' \
     #    -F 'type="image/jpeg"' \
@@ -77,21 +88,22 @@ def upload_image(image_path):
     headers['Authorization'] = f"Bearer {META_TOKEN}"
 
     files = {'file': open('/Users/ggarcia/git_sources/bicing_utils/mapita.png', 'rb')}
-    #data = {'type': (None, "image/png"), 'messaging_product': (None, "whatsapp")}
+    # data = {'type': (None, "image/png"), 'messaging_product': (None, "whatsapp")}
     data = {'type': "image/png", 'messaging_product': "whatsapp"}
     print(files)
 
     response = requests.post(
-            f"https://graph.facebook.com/v17.0/{ACTIVE_NUMBER_ID}/media", 
-            headers=headers,
-            data=data,
-            files=files)
-    
+        f"https://graph.facebook.com/v17.0/{ACTIVE_NUMBER_ID}/media",
+        headers=headers,
+        data=data,
+        files=files)
+
     if response.status_code == 200:
         return response.json()
     else:
         print(response.text)
         return response.text
+
 
 ##def send_message(
 ##        message_text, 
@@ -144,30 +156,6 @@ def upload_image(image_path):
 ##    return True
 
 
-def verify_webhook(query_params: QueryParams):
-    """ Endpoint to verify the webhook
-    """
-    print("----- VERIFY WEBHOOK -----")
-    print(query_params)
-    print("----- VERIFY WEBHOOK -----")
-    
-    if 'hub.mode' not in query_params or \
-            'hub.challenge' not in query_params or \
-            'hub.verify_token' not in query_params:
-        print("Error: missing params")
-        return "Error", 500
-
-    mode = query_params['hub.mode']
-    challenge = int(query_params['hub.challenge'])
-    token = query_params['hub.verify_token']
-    
-    ## TODO:  verif secret from secret manager
-    if mode == 'subscribe' and token == 'verif':
-        print(f'Webhook verified!!! {challenge}')
-        return challenge
-    else:
-        return "Error", 500
-
 def _extract_coordinates(message):
     """ Extract coordinates from message
     """
@@ -178,9 +166,10 @@ def _extract_coordinates(message):
     longitude = message['location']['longitude']
     return latitude, longitude
 
+
 def process_webhook(
         data: dict,
-    ):
+):
     print("----- PROCESS WEBHOOK -----")
     print(data)
     print("---------------------------")
@@ -188,12 +177,12 @@ def process_webhook(
     for entry in data['entry']:
         for change in entry['changes']:
             print(f"Field --> {change['field']}")
-            
+
             value = change['value']
             metadata = value['metadata']
 
             if 'messages' in value:
-                
+
                 ################ Process User
                 contacts = value['contacts']
 
@@ -204,7 +193,7 @@ def process_webhook(
                     print(f"Message is -------> {message}")
                     latitude, longitude = _extract_coordinates(message)
                     print(f"Latitude is {latitude} and longitude is {longitude}")
-                    
+
                     map_string = bicing.find_bikes(latitude, longitude)
 
                     with tempfile.NamedTemporaryFile(suffix='.png') as tmp:
@@ -223,11 +212,10 @@ def process_webhook(
                 print("No messages or statuses")
 
             ## Detect the change type the triggered the webhook to process
-            #detect_change_type(change)
+            # detect_change_type(change)
 
     ## Process user
     print("----------END WEBHOOK----------")
     ## Return OK to webhook
 
     return True
-
