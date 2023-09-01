@@ -5,7 +5,7 @@ import json
 import base64
 import os
 
-import src.whatsapp.whatsapp as waf
+from src.whatsapp.whatsapp import WhatsappClient
 
 from dotenv import load_dotenv
 
@@ -17,8 +17,8 @@ PUBSUB_PROJECT_ID = os.getenv("PUBSUB_PROJECT_ID", "bicing-prod")
 PUBSUB_TOPIC_ID = os.getenv("PUBSUB_TOPIC_ID", "meta-wewebhook")
 
 router = APIRouter(
-        tags=["whatsapp"],
-        )
+    tags=["whatsapp"],
+)
 
 
 @router.get("/ping")
@@ -29,17 +29,22 @@ async def ping():
 @router.get('/meta_hook')
 def GET_meta_hook(
         request: Request
-    ):
+):
     """
     Have to return OK to this call to subscribe webhook in meta
     hub.mode=subscribe&hub.challenge=1918437135&hub.verify_token=verificacion
     """
-    return waf.verify_webhook(request.query_params)
+    wac = WhatsappClient()
+    try:
+        return wac.verify_webhook(request.path_params)
+    except:
+        raise HTTPException("verification error")
+
 
 @router.post('/meta_hook')
 async def POST_meta_hook(
-        request: Request, 
-    ):
+        request: Request,
+):
     """
     """
     print("----- META WEBHOOK -----")
@@ -54,19 +59,19 @@ async def POST_meta_hook(
     except:
         return "OK", 200
 
-    #publisher = pubsub_v1.PublisherClient()
-    #topic_path = publisher.topic_path(PUBSUB_PROJECT_ID, PUBSUB_TOPIC_ID)
+    # publisher = pubsub_v1.PublisherClient()
+    # topic_path = publisher.topic_path(PUBSUB_PROJECT_ID, PUBSUB_TOPIC_ID)
     #
-    #future = publisher.publish(topic_path, data)
-    #print(future.result())
-    #print(f"Published messages to {topic_path}.")
+    # future = publisher.publish(topic_path, data)
+    # print(future.result())
+    # print(f"Published messages to {topic_path}.")
     return "OK", 200
 
 
 @router.post('/pubsub_hook')
 async def meta_hook(
-        request: Request, 
-    ):
+        request: Request,
+):
     """
     hub.mode=subscribe&hub.challenge=1918437135&hub.verify_token=verificacion
     El webhook siempre va a devolver 200, el processing se hace en un background taask
@@ -77,9 +82,9 @@ async def meta_hook(
     json_data = json.loads(decoded_data)
     print("--------------------------------------------------")
 
-    #try:
+    # try:
     waf.process_webhook(json_data)
-    #except Exception as e:
+    # except Exception as e:
     #    print(e)
     #    return "OK", 200
-    #return "OK", 200
+    # return "OK", 200
