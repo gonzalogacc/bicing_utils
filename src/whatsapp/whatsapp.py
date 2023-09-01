@@ -7,7 +7,8 @@ from starlette.datastructures import QueryParams
 from src import bicing
 import os
 
-from src.whatsapp.schemas import LocationMessage
+from src.schemas import Coordinates
+from src.whatsapp.schemas import LocationMessage, WhatsappMessage, WrongMessageType
 
 load_dotenv()
 
@@ -37,8 +38,19 @@ class WhatsappClient:
             headers=headers
         )
 
-    def process_location_message(self, message: LocationMessage):
-        pass
+    def process_location_message(self, message: WhatsappMessage) -> Coordinates:
+        if message.entry[0].changes[0].value.messages[0].type != "location":
+            raise WrongMessageType("Messaage is not a location")
+
+        latitude = message.entry[0].changes[0].value.messages[0].location.latitude
+        longitude = message.entry[0].changes[0].value.messages[0].location.longitude
+        return Coordinates(latitude=latitude, longitude=longitude)
+
+    def send_message(self):
+        return None
+
+    def send_image(self):
+        return None
 
 # def POST_meta_request(url, json, add_headers={}):
 #     headers = {}

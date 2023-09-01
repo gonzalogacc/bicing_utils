@@ -67,10 +67,12 @@ class Entry(BaseModel):
     changes: List[Changes]
 
 
-class WebhookObject(BaseModel):
+class WhatsappMessage(BaseModel):
     object: WhatsappObjectTypeEnum
     entry: List[Entry]
 
+class WrongMessageType(Exception):
+    pass
 
 class LocationMessage(BaseModel):
     ## b'{"object":"whatsapp_business_account","entry":[{"id":"104246805978102","changes":[{"value":{"messaging_product":"whatsapp","metadata":{"display_phone_number":"34623508545","phone_number_id":"102033176202052"},"contacts":[{"profile":{"name":"Gonza"},"wa_id":"447472138610"}],"messages":[{"from":"447472138610","id":"wamid.HBgMNDQ3NDcyMTM4NjEwFQIAEhgUM0FEMjcwQzBBRDVENDc5NDg4NzQA","timestamp":"1693442282","location":{"latitude":41.381469726562,"longitude":2.1878051757812},"type":"location"}]},"field":"messages"}]}]}'
