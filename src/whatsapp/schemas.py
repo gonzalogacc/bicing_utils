@@ -100,11 +100,28 @@ class TextObject(BaseModel):
     body: str
 
 
+class MimeTypeEnum(str, Enum):
+    image_png = "image/png"
+
+
+class WhatsappMediaTypeEnum(str, Enum):
+    image_png = "image/png"
+
+
+class WhatsappMediaResource(BaseModel):
+    name: str
+    path: str
+    mime_type: MimeTypeEnum
+    whatsapp_type: WhatsappMediaTypeEnum
+
+
 class UploadImageResponse(BaseModel):
     id: int
 
+
 class ImageUploadError(Exception):
     pass
+
 
 class MessageOut(BaseModel):
     """ Construct this object to send a message to whatsapp
