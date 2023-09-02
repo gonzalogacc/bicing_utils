@@ -69,7 +69,7 @@ class Entry(BaseModel):
     changes: List[Changes]
 
 
-class WhatsappMessage(BaseModel):
+class WhatsappMessageIN(BaseModel):
     object: WhatsappObjectTypeEnum
     entry: List[Entry]
 
@@ -82,17 +82,9 @@ class MessageProductEnum(str, Enum):
     whatsapp = "whatsapp"
 
 
-class RecipientTypeEnum(str, Enum):
-    individual = "individual"
-
-
 class TypeEnum(str, Enum):
     image = "image"
     text = "text"
-
-
-class ImageObject(BaseModel):
-    pass
 
 
 class TextObject(BaseModel):
@@ -105,7 +97,15 @@ class MimeTypeEnum(str, Enum):
 
 
 class WhatsappMediaTypeEnum(str, Enum):
-    image_png = "image/png"
+    image_png = "image"
+    contact = "contact"
+    audio = "audio"
+    document = "document"
+    image = "image"
+    location = "location"
+    sticker = "sticker"
+    text = "text"
+    video = "video"
 
 
 class WhatsappMediaResource(BaseModel):
@@ -115,26 +115,63 @@ class WhatsappMediaResource(BaseModel):
     whatsapp_type: WhatsappMediaTypeEnum
 
 
-class UploadImageResponse(BaseModel):
-    id: int
+class WhatsappResponseId(BaseModel):
+    id: str
 
 
 class ImageUploadError(Exception):
     pass
 
 
-class MessageOut(BaseModel):
+class RecipientTypeEnum(str, Enum):
+    individual = "individual"
+
+
+class WhatsappDocumentProvider(BaseModel):
+    name: str
+
+
+class WhatsappMediaLink(BaseModel):
+    link: str
+    provider: Optional[WhatsappDocumentProvider]
+
+
+class WhatsappTextObject(BaseModel):
+    preview_url: Optional[bool] = None
+    body: str
+
+
+class WhatsappMessageOUT(BaseModel):
     """ Construct this object to send a message to whatsapp
     """
-    message_product: MessageProductEnum
-    recipient_type: RecipientTypeEnum
+    messaging_product: Optional[str] = "whatsapp"  ## it's always whatsapp
+    recipient_type: Optional[RecipientTypeEnum] = RecipientTypeEnum.individual
+    type: WhatsappMediaTypeEnum
     to: str
-    type: TypeEnum
-    image: ImageObject
-    text: TextObject
+
+    text: Optional[WhatsappTextObject] = None
+
+    ## This fields need to be uploaded first and then the id added here
+    audio: Optional[WhatsappResponseId] = None
+    document: Optional[WhatsappResponseId | WhatsappMediaLink] = None
+    video: Optional[WhatsappResponseId] = None
+    image: Optional[WhatsappResponseId | WhatsappMediaLink] = None
+    sticker: Optional[WhatsappResponseId | WhatsappMediaLink] = None
 
 
-class LocationMessage(BaseModel):
-    ## b'{"object":"whatsapp_business_account","entry":[{"id":"104246805978102","changes":[{"value":{"messaging_product":"whatsapp","metadata":{"display_phone_number":"34623508545","phone_number_id":"102033176202052"},"contacts":[{"profile":{"name":"Gonza"},"wa_id":"447472138610"}],"messages":[{"from":"447472138610","id":"wamid.HBgMNDQ3NDcyMTM4NjEwFQIAEhgUM0FEMjcwQzBBRDVENDc5NDg4NzQA","timestamp":"1693442282","location":{"latitude":41.381469726562,"longitude":2.1878051757812},"type":"location"}]},"field":"messages"}]}]}'
-    pass
-## b'{"object":"whatsapp_business_account","entry":[{"id":"104246805978102","changes":[{"value":{"messaging_product":"whatsapp","metadata":{"display_phone_number":"34623508545","phone_number_id":"102033176202052"},"contacts":[{"profile":{"name":"Gonza"},"wa_id":"447472138610"}],"messages":[{"from":"447472138610","id":"wamid.HBgMNDQ3NDcyMTM4NjEwFQIAEhgUM0FBM0UwRjlEMzA5OTQ3OTVGODEA","timestamp":"1693439799","location":{"latitude":41.381469726562,"longitude":2.1878051757812},"type":"location"}]},"field":"messages"}]}]}'
+class WhatsappContact(BaseModel):
+    input: str
+    wa_id: str
+
+
+## {"messaging_product":"whatsapp","contacts":[{"input":"+447472138610","wa_id":"447472138610"}],"messages":[{"id":"wamid.HBgMNDQ3NDcyMTM4NjEwFQIAERgSRUQzQzM1OUE3N0FCOUZCQkEzAA=="}]}
+
+class WhatsappMessageResponse(BaseModel):
+    messaging_product: str
+    contacts: List[WhatsappContact]
+    messages: List[WhatsappResponseId]
+
+# class LocationMessage(BaseModel):
+#    ## b'{"object":"whatsapp_business_account","entry":[{"id":"104246805978102","changes":[{"value":{"messaging_product":"whatsapp","metadata":{"display_phone_number":"34623508545","phone_number_id":"102033176202052"},"contacts":[{"profile":{"name":"Gonza"},"wa_id":"447472138610"}],"messages":[{"from":"447472138610","id":"wamid.HBgMNDQ3NDcyMTM4NjEwFQIAEhgUM0FEMjcwQzBBRDVENDc5NDg4NzQA","timestamp":"1693442282","location":{"latitude":41.381469726562,"longitude":2.1878051757812},"type":"location"}]},"field":"messages"}]}]}'
+#    pass
+### b'{"object":"whatsapp_business_account","entry":[{"id":"104246805978102","changes":[{"value":{"messaging_product":"whatsapp","metadata":{"display_phone_number":"34623508545","phone_number_id":"102033176202052"},"contacts":[{"profile":{"name":"Gonza"},"wa_id":"447472138610"}],"messages":[{"from":"447472138610","id":"wamid.HBgMNDQ3NDcyMTM4NjEwFQIAEhgUM0FBM0UwRjlEMzA5OTQ3OTVGODEA","timestamp":"1693439799","location":{"latitude":41.381469726562,"longitude":2.1878051757812},"type":"location"}]},"field":"messages"}]}]}'

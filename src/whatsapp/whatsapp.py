@@ -11,8 +11,8 @@ import logging as log
 import os
 
 from src.schemas import Coordinates
-from src.whatsapp.schemas import LocationMessage, WhatsappMessage, WrongMessageType, UploadImageResponse, \
-    ImageUploadError, MessageOut, WhatsappMediaResource
+from src.whatsapp.schemas import LocationMessage, WhatsappMessageIN, WrongMessageType, WhatsappResponseId, \
+    ImageUploadError, WhatsappMediaResource, WhatsappMessageResponse, WhatsappMessageOUT
 
 load_dotenv()
 
@@ -65,7 +65,7 @@ class WhatsappClient:
             raise Exception()
 
     @staticmethod
-    def process_location_message(message: WhatsappMessage) -> Coordinates:
+    def process_location_message(message: WhatsappMessageIN) -> Coordinates:
         if message.entry[0].changes[0].value.messages[0].type != "location":
             raise WrongMessageType("Messaage is not a location")
 
@@ -73,8 +73,38 @@ class WhatsappClient:
         longitude = message.entry[0].changes[0].value.messages[0].location.longitude
         return Coordinates(latitude=latitude, longitude=longitude)
 
-    def send_message(self, message_out: MessageOut):
+    def send_message(self, message_out: WhatsappMessageOUT):
+        headers = {"Content-Type": "application/json"}
+        response = self._http_client.post(
+            f"/{ACTIVE_NUMBER_ID}/messages",
+            json=message_out.model_dump())
 
+        if response.status_code == 200:
+            print("OK")
+            print(response.text)
+            return WhatsappMessageResponse(**response.json())
+        else:
+            print(response.text)
+            raise Exception("Message exception")
+
+        # curl - X POST \
+        #         'https://graph.facebook.com/v17.0/FROM_PHONE_NUMBER_ID/messages' \
+        #         - H
+        # 'Authorization: Bearer ACCESS_TOKEN' \
+        # - H
+        # 'Content-Type: application/json' \
+        # - d
+        # '
+        # {
+        #     "messaging_product": "whatsapp",
+        #     "recipient_type": "individual",
+        #     "to": "PHONE_NUMBER",
+        #     "type": "text",
+        #     "text": { // the text object
+        #     "preview_url": false,
+        #     "body": "MESSAGE_CONTENT"
+        # }
+        # }'
         return None
 
     def send_image(self):
@@ -88,7 +118,7 @@ class WhatsappClient:
            data=data,
            files=files)
         if response.status_code == 200:
-            return UploadImageResponse(**response.json())
+            return WhatsappResponseId(**response.json())
         else:
             log.error(response.text)
             print(response.text)

@@ -9,7 +9,7 @@ from src.whatsapp.whatsapp import WhatsappClient
 
 from dotenv import load_dotenv
 
-from src.whatsapp.schemas import WhatsappMessage
+from src.whatsapp.schemas import WhatsappMessageIN
 
 load_dotenv()
 
@@ -51,7 +51,7 @@ async def POST_meta_hook(
     data = await request.body()
     try:
         print("----- MESSAGE WEBHOOK -----")
-        message = WhatsappMessage(**json.loads(data))
+        message = WhatsappMessageIN(**json.loads(data))
         print(message.entry[0].changes[0].value.messages[0].location.latitude)
         print(message.entry[0].changes[0].value.messages[0].location.longitude)
         print("----- MESSAGE WEBHOOK -----")
