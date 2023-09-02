@@ -38,7 +38,7 @@ class WhatsappClient:
         }
 
         return httpx.Client(
-            base_url="https://graph.facebook.com/v17.0/",
+            base_url=f"https://graph.facebook.com/v17.0/{ACTIVE_NUMBER_ID}",
             headers=headers
         )
 
@@ -76,7 +76,7 @@ class WhatsappClient:
     def send_message(self, message_out: WhatsappMessageOUT):
         headers = {"Content-Type": "application/json"}
         response = self._http_client.post(
-            f"/{ACTIVE_NUMBER_ID}/messages",
+            f"/messages",
             json=message_out.model_dump())
 
         if response.status_code == 200:
@@ -114,7 +114,7 @@ class WhatsappClient:
         files = {"file": (media_resource.name, open(media_resource.path, "rb"), media_resource.mime_type)}
         data = {"type": "image/png", "messaging_product": "whatsapp"}
         response = self._http_client.post(
-           f"/{ACTIVE_NUMBER_ID}/media",
+           f"/media",
            data=data,
            files=files)
         if response.status_code == 200:

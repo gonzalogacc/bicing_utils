@@ -65,12 +65,9 @@ def test_send_whatsapp_message_OK(whatsapp_test_API):
         type = WhatsappMediaTypeEnum.text,
         text = WhatsappTextObject(body="test message")
     )
-    mess = text_message.model_dump()
-    print(mess)
     wc = WhatsappClient()
+    wc._http_client = whatsapp_test_API
     response = wc.send_message(text_message)
-    print(response)
-
     assert len(response.messages) > 0
 
 # {

@@ -31,11 +31,14 @@ def bicing_test_API():
 def uploaded_media(request) -> JSONResponse:
     return JSONResponse({"id": "1363181297589232"})
 
+def send_text_message(request) -> JSONResponse:
+    return JSONResponse({"messaging_product":"whatsapp","contacts":[{"input":"+447472138610","wa_id":"447472138610"}],"messages":[{"id":"wamid.HBgMNDQ3NDcyMTM4NjEwFQIAERgSNEREMjYzMDE3OEJCQUQwRTNGAA=="}]})
 
 @pytest.fixture(scope="session")
 def whatsapp_test_API():
     app = Starlette(routes=[
         Route("/", hello),
-        Route("/102033176202052/media", uploaded_media, methods=["POST"])
+        Route("/media", uploaded_media, methods=["POST"]),
+        Route("/messages", send_text_message, methods=["POST"])
     ])
     yield TestClient(app)
