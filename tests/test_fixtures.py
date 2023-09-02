@@ -15,7 +15,7 @@ def hello(request: Request) -> PlainTextResponse:
 
 def stations_response(request: Request) -> JSONResponse:
     data = json.loads(open(os.path.join(os.getcwd(), "bicing_stations_response.json")).read())
-    #data = json.loads(open(os.path.join(os.getcwd(), "another_test.json")).read())
+    # data = json.loads(open(os.path.join(os.getcwd(), "another_test.json")).read())
     return JSONResponse(data)
 
 
@@ -24,5 +24,18 @@ def bicing_test_API():
     app = Starlette(routes=[
         Route("/", hello),
         Route("/es/get-stations", stations_response)
+    ])
+    yield TestClient(app)
+
+
+def uploaded_media(request) -> JSONResponse:
+    return JSONResponse({"id": "1363181297589232"})
+
+
+@pytest.fixture(scope="session")
+def whatsapp_test_API():
+    app = Starlette(routes=[
+        Route("/", hello),
+        Route("/102033176202052/media", uploaded_media, methods=["POST"])
     ])
     yield TestClient(app)

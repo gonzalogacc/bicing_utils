@@ -1,15 +1,18 @@
 import pprint
 import httpx
 import tempfile
+
+import requests
 from dotenv import load_dotenv
 from starlette.datastructures import QueryParams
 
-from src import bicing
+import logging as log
+
 import os
 
 from src.schemas import Coordinates
 from src.whatsapp.schemas import LocationMessage, WhatsappMessage, WrongMessageType, UploadImageResponse, \
-    ImageUploadError
+    ImageUploadError, MessageOut, WhatsappMediaResource
 
 load_dotenv()
 
@@ -32,7 +35,6 @@ class WhatsappClient:
     def _make_httpx_client():
         headers = {
             "Authorization": f"Bearer {META_TOKEN}",
-            "Content-Type": "application/json"
         }
 
         return httpx.Client(
@@ -78,27 +80,20 @@ class WhatsappClient:
     def send_image(self):
         return None
 
-    def upload_image(self, image_path):
-        # curl -X POST 'https://graph.facebook.com/v17.0/<MEDIA_ID>/media' \
-        #    -H 'Authorization: Bearer <ACCESS_TOKEN>' \
-        #    -F 'file=@"2jC60Vdjn/cross-trainers-summer-sale.jpg"' \
-        #    -F 'type="image/jpeg"' \
-        #    -F 'messaging_product="whatsapp"'
-
-        files = {'file': open(image_path, 'rb')}
-        data = {'type': "image/png", 'messaging_product': "whatsapp"}
-
+    def upload_image(self, media_resource: WhatsappMediaResource):
+        files = {"file": (media_resource.name, open(media_resource.path, "rb"), media_resource.mime_type)}
+        data = {"type": "image/png", "messaging_product": "whatsapp"}
         response = self._http_client.post(
-            f"/{ACTIVE_NUMBER_ID}/media",
-            data=data,
-            files=files)
-
+           f"/{ACTIVE_NUMBER_ID}/media",
+           data=data,
+           files=files)
         if response.status_code == 200:
-            # {"id":"1363181297589232"}
             return UploadImageResponse(**response.json())
         else:
+            log.error(response.text)
             print(response.text)
-            raise ImageUploadError("error uploading the image")
+            raise ImageUploadError("Error uploading the image")
+
 
 ##def send_message(
 ##        message_text, 

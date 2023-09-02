@@ -3,9 +3,10 @@ from urllib import request
 import pytest
 from httpx import QueryParams
 
-from src.whatsapp.schemas import WhatsappMessage, WrongMessageType
-from src.whatsapp.whatsapp import verify_webhook, WhatsappClient
-
+from src.whatsapp.schemas import WhatsappMessage, WrongMessageType, WhatsappMediaResource, MimeTypeEnum, \
+    WhatsappMediaTypeEnum
+from src.whatsapp.whatsapp import WhatsappClient
+from tests.test_fixtures import whatsapp_test_API
 
 def test_webhook_object_SimpleMessage():
     raw = {'object': 'whatsapp_business_account', 'entry': [{'id': '104246805978102', 'changes': [{'value': {'messaging_product': 'whatsapp', 'metadata': {'display_phone_number': '34623508545', 'phone_number_id': '102033176202052'}, 'contacts': [{'profile': {'name': 'Gonza'}, 'wa_id': '447472138610'}], 'messages': [{'from': '447472138610', 'id': 'wamid.HBgMNDQ3NDcyMTM4NjEwFQIAEhgWM0VCMDcwOTVGNDA5ODBGMjREMkY1QQA=', 'timestamp': '1693437013', 'text': {'body': 'hola'}, 'type': 'text'}]}, 'field': 'messages'}]}]}
@@ -42,3 +43,17 @@ def test_extract_latlong_from_text_message():
     with pytest.raises(WrongMessageType) as error:
         wac = WhatsappClient()
         coordinates = wac.process_location_message(WhatsappMessage(**raw))
+
+def test_upload_image_function_ok(whatsapp_test_API):
+    media_resource = WhatsappMediaResource(
+        name="mapita.png",
+        path="/Users/ggarcia/git_sources/bicing_utils/mapita.png",
+        mime_type=MimeTypeEnum.image_png,
+        whatsapp_type=WhatsappMediaTypeEnum.image_png,
+    )
+
+    wc = WhatsappClient()
+    wc._http_client = whatsapp_test_API
+    response = wc.upload_image(media_resource)
+    print(response)
+    assert response.id == 1363181297589232
