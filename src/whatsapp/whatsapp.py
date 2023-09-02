@@ -8,7 +8,8 @@ from src import bicing
 import os
 
 from src.schemas import Coordinates
-from src.whatsapp.schemas import LocationMessage, WhatsappMessage, WrongMessageType
+from src.whatsapp.schemas import LocationMessage, WhatsappMessage, WrongMessageType, UploadImageResponse, \
+    ImageUploadError
 
 load_dotenv()
 
@@ -70,40 +71,34 @@ class WhatsappClient:
         longitude = message.entry[0].changes[0].value.messages[0].location.longitude
         return Coordinates(latitude=latitude, longitude=longitude)
 
-    def send_message(self):
+    def send_message(self, message_out: MessageOut):
+
         return None
 
     def send_image(self):
         return None
 
+    def upload_image(self, image_path):
+        # curl -X POST 'https://graph.facebook.com/v17.0/<MEDIA_ID>/media' \
+        #    -H 'Authorization: Bearer <ACCESS_TOKEN>' \
+        #    -F 'file=@"2jC60Vdjn/cross-trainers-summer-sale.jpg"' \
+        #    -F 'type="image/jpeg"' \
+        #    -F 'messaging_product="whatsapp"'
 
-def upload_image(image_path):
-    # curl -X POST 'https://graph.facebook.com/v17.0/<MEDIA_ID>/media' \
-    #    -H 'Authorization: Bearer <ACCESS_TOKEN>' \
-    #    -F 'file=@"2jC60Vdjn/cross-trainers-summer-sale.jpg"' \
-    #    -F 'type="image/jpeg"' \
-    #    -F 'messaging_product="whatsapp"'
+        files = {'file': open(image_path, 'rb')}
+        data = {'type': "image/png", 'messaging_product': "whatsapp"}
 
-    headers = {}
-    headers['Authorization'] = f"Bearer {META_TOKEN}"
+        response = self._http_client.post(
+            f"/{ACTIVE_NUMBER_ID}/media",
+            data=data,
+            files=files)
 
-    files = {'file': open('/Users/ggarcia/git_sources/bicing_utils/mapita.png', 'rb')}
-    # data = {'type': (None, "image/png"), 'messaging_product': (None, "whatsapp")}
-    data = {'type': "image/png", 'messaging_product': "whatsapp"}
-    print(files)
-
-    response = requests.post(
-        f"https://graph.facebook.com/v17.0/{ACTIVE_NUMBER_ID}/media",
-        headers=headers,
-        data=data,
-        files=files)
-
-    if response.status_code == 200:
-        return response.json()
-    else:
-        print(response.text)
-        return response.text
-
+        if response.status_code == 200:
+            # {"id":"1363181297589232"}
+            return UploadImageResponse(**response.json())
+        else:
+            print(response.text)
+            raise ImageUploadError("error uploading the image")
 
 ##def send_message(
 ##        message_text, 
@@ -156,66 +151,65 @@ def upload_image(image_path):
 ##    return True
 
 
-def _extract_coordinates(message):
-    """ Extract coordinates from message
-    """
-    if "location" not in message:
-        raise Exception("No location in message")
-
-    latitude = message['location']['latitude']
-    longitude = message['location']['longitude']
-    return latitude, longitude
-
-
-def process_webhook(
-        data: dict,
-):
-    print("----- PROCESS WEBHOOK -----")
-    print(data)
-    print("---------------------------")
-    ##### TODO: El 2xx tine que ir aca y spawnear esto en async or something
-    for entry in data['entry']:
-        for change in entry['changes']:
-            print(f"Field --> {change['field']}")
-
-            value = change['value']
-            metadata = value['metadata']
-
-            if 'messages' in value:
-
-                ################ Process User
-                contacts = value['contacts']
-
-                for message in value['messages']:
-                    if message['type'] != 'location':
-                        continue
-
-                    print(f"Message is -------> {message}")
-                    latitude, longitude = _extract_coordinates(message)
-                    print(f"Latitude is {latitude} and longitude is {longitude}")
-
-                    map_string = bicing.find_bikes(latitude, longitude)
-
-                    with tempfile.NamedTemporaryFile(suffix='.png') as tmp:
-                        ## Upload media file
-                        tmp.write(map_string)
-                        image_id = upload_image(tmp.name)
+# def _extract_coordinates(message):
+#     """ Extract coordinates from message
+#     """
+#     if "location" not in message:
+#         raise Exception("No location in message")
+#
+#     latitude = message['location']['latitude']
+#     longitude = message['location']['longitude']
+#     return latitude, longitude
 
 
-
-
-            elif 'statuses' in value:
-                for status in value['statuses']:
-                    print(f"Status is -------> {status}")
-
-            else:
-                print("No messages or statuses")
-
-            ## Detect the change type the triggered the webhook to process
-            # detect_change_type(change)
-
-    ## Process user
-    print("----------END WEBHOOK----------")
-    ## Return OK to webhook
-
-    return True
+# def process_webhook(
+#         data: dict,
+# ):
+#     print("----- PROCESS WEBHOOK -----")
+#     print(data)
+#     print("---------------------------")
+#     for entry in data['entry']:
+#         for change in entry['changes']:
+#             print(f"Field --> {change['field']}")
+#
+#             value = change['value']
+#             metadata = value['metadata']
+#
+#             if 'messages' in value:
+#
+#                 ################ Process User
+#                 contacts = value['contacts']
+#
+#                 for message in value['messages']:
+#                     if message['type'] != 'location':
+#                         continue
+#
+#                     print(f"Message is -------> {message}")
+#                     latitude, longitude = _extract_coordinates(message)
+#                     print(f"Latitude is {latitude} and longitude is {longitude}")
+#
+#                     map_string = bicing.find_bikes(latitude, longitude)
+#
+#                     with tempfile.NamedTemporaryFile(suffix='.png') as tmp:
+#                         ## Upload media file
+#                         tmp.write(map_string)
+#                         image_id = upload_image(tmp.name)
+#
+#
+#
+#
+#             elif 'statuses' in value:
+#                 for status in value['statuses']:
+#                     print(f"Status is -------> {status}")
+#
+#             else:
+#                 print("No messages or statuses")
+#
+#             ## Detect the change type the triggered the webhook to process
+#             # detect_change_type(change)
+#
+#     ## Process user
+#     print("----------END WEBHOOK----------")
+#     ## Return OK to webhook
+#
+#     return True
