@@ -1,3 +1,5 @@
+import uuid
+
 import requests
 from dataclasses import dataclass
 from typing import List
@@ -72,10 +74,10 @@ def get_static_map(markers=[]):
     response = requests.get(map_url, stream=True)
     response.raw.decode_content = True
 
-    # filename = "mapita.png"
-    # with open(f'{filename}', 'wb') as outfile:
-    #   outfile.write(response.content)
-    return response.content
+    filename = f"/tmp/{uuid.uuid4()}.png"
+    with open(f'{filename}', 'wb') as outfile:
+      outfile.write(response.content)
+    return filename
 
 
 if __name__ == "__main__":

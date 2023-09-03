@@ -13,7 +13,7 @@ import os
 from src.schemas import Coordinates
 from src.whatsapp.schemas import LocationMessage, WhatsappMessageIN, WrongMessageType, WhatsappResponseId, \
     ImageUploadError, WhatsappMediaResource, WhatsappMessageResponse, WhatsappMessageOUT, WhatsappMediaTypeEnum, \
-    WhatsappTextObject, MimeTypeEnum
+    WhatsappTextObject, MimeTypeEnum, WhatsappContact
 
 load_dotenv()
 
@@ -74,6 +74,9 @@ class WhatsappClient:
         longitude = message.entry[0].changes[0].value.messages[0].location.longitude
         return Coordinates(latitude=latitude, longitude=longitude)
 
+    def message_sender(self, message: WhatsappMessageIN) -> WhatsappContact:
+        return message.entry[0].changes[0].value.contacts[0]
+
     def send_message(self, message_out: WhatsappMessageOUT):
         headers = {"Content-Type": "application/json"}
         response = self._http_client.post(
@@ -86,7 +89,7 @@ class WhatsappClient:
             log.error(response.text)
             raise Exception("Message exception")
 
-    def send_image(self, image_path: str):
+    def send_image(self, to: str, image_path: str):
         ## Upload the image and get the code
         media_resource = WhatsappMediaResource(
             path=image_path,
@@ -97,7 +100,7 @@ class WhatsappClient:
 
         ## Send the image
         text_message = WhatsappMessageOUT(
-            to="+447472138610",
+            to=f"+{to}",
             type=WhatsappMediaTypeEnum.image,
             image=WhatsappResponseId(id=image.id),
         )

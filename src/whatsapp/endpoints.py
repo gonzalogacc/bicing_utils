@@ -5,6 +5,11 @@ import json
 import base64
 import os
 
+from google.cloud import pubsub_v1
+
+from src.bicing import BicingClient
+from src.google_maps import get_static_map, Marker
+from src.schemas import ResourceEnum
 from src.whatsapp.whatsapp import WhatsappClient
 
 from dotenv import load_dotenv
@@ -13,8 +18,8 @@ from src.whatsapp.schemas import WhatsappMessageIN
 
 load_dotenv()
 
-PUBSUB_PROJECT_ID = os.getenv("PUBSUB_PROJECT_ID", "bicing-prod")
-PUBSUB_TOPIC_ID = os.getenv("PUBSUB_TOPIC_ID", "meta-wewebhook")
+PUBSUB_PROJECT_ID = os.getenv("PUBSUB_PROJECT_ID", "bicing-replacement")
+PUBSUB_TOPIC_ID = os.getenv("PUBSUB_TOPIC_ID", "bicing-prod")
 
 router = APIRouter(
     tags=["whatsapp"],
@@ -49,22 +54,12 @@ async def POST_meta_hook(
     """
     print("----- META WEBHOOK -----")
     data = await request.body()
-    try:
-        print("----- MESSAGE WEBHOOK -----")
-        message = WhatsappMessageIN(**json.loads(data))
-        print(message.entry[0].changes[0].value.messages[0].location.latitude)
-        print(message.entry[0].changes[0].value.messages[0].location.longitude)
-        print("----- MESSAGE WEBHOOK -----")
+    publisher = pubsub_v1.PublisherClient()
+    topic_path = publisher.topic_path(PUBSUB_PROJECT_ID, PUBSUB_TOPIC_ID)
 
-    except:
-        return "OK", 200
-
-    # publisher = pubsub_v1.PublisherClient()
-    # topic_path = publisher.topic_path(PUBSUB_PROJECT_ID, PUBSUB_TOPIC_ID)
-    #
-    # future = publisher.publish(topic_path, data)
-    # print(future.result())
-    # print(f"Published messages to {topic_path}.")
+    future = publisher.publish(topic_path, data)
+    print(future.result())
+    print(f"Published messages to {topic_path}.")
     return "OK", 200
 
 
@@ -82,9 +77,22 @@ async def meta_hook(
     json_data = json.loads(decoded_data)
     print("--------------------------------------------------")
 
-    # try:
-    waf.process_webhook(json_data)
-    # except Exception as e:
-    #    print(e)
-    #    return "OK", 200
-    # return "OK", 200
+    ## Todo process the extra messages whatsapp send after a message
+    try:
+        print("----- MESSAGE WEBHOOK -----")
+        wc = WhatsappClient()
+        was_message = WhatsappMessageIN(**json_data)
+        coordinates = wc.process_location_message(was_message)
+        user = wc.message_sender(was_message)
+        bc = BicingClient()
+        stations = bc.find_closest(ResourceEnum.electrical_bikes, coordinates)
+
+        bikes = [Marker(latitude=station.latitude, longitude=station.longitude, label=station.electrical_bikes) for station in stations]
+        outfile = get_static_map(markers=bikes)
+        wc.send_image(user.wa_id, outfile)
+
+        print("----- MESSAGE WEBHOOK -----")
+
+    except:
+
+        return "OK", 200
