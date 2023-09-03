@@ -12,7 +12,8 @@ import os
 
 from src.schemas import Coordinates
 from src.whatsapp.schemas import LocationMessage, WhatsappMessageIN, WrongMessageType, WhatsappResponseId, \
-    ImageUploadError, WhatsappMediaResource, WhatsappMessageResponse, WhatsappMessageOUT
+    ImageUploadError, WhatsappMediaResource, WhatsappMessageResponse, WhatsappMessageOUT, WhatsappMediaTypeEnum, \
+    WhatsappTextObject, MimeTypeEnum
 
 load_dotenv()
 
@@ -80,111 +81,44 @@ class WhatsappClient:
             json=message_out.model_dump())
 
         if response.status_code == 200:
-            print("OK")
-            print(response.text)
             return WhatsappMessageResponse(**response.json())
         else:
-            print(response.text)
+            log.error(response.text)
             raise Exception("Message exception")
 
-        # curl - X POST \
-        #         'https://graph.facebook.com/v17.0/FROM_PHONE_NUMBER_ID/messages' \
-        #         - H
-        # 'Authorization: Bearer ACCESS_TOKEN' \
-        # - H
-        # 'Content-Type: application/json' \
-        # - d
-        # '
-        # {
-        #     "messaging_product": "whatsapp",
-        #     "recipient_type": "individual",
-        #     "to": "PHONE_NUMBER",
-        #     "type": "text",
-        #     "text": { // the text object
-        #     "preview_url": false,
-        #     "body": "MESSAGE_CONTENT"
-        # }
-        # }'
-        return None
+    def send_image(self, image_path: str):
+        ## Upload the image and get the code
+        media_resource = WhatsappMediaResource(
+            path=image_path,
+            mime_type=MimeTypeEnum.image_png,
+            whatsapp_type=WhatsappMediaTypeEnum.image_png,
+        )
+        image = self.upload_image(media_resource)
 
-    def send_image(self):
+        ## Send the image
+        text_message = WhatsappMessageOUT(
+            to="+447472138610",
+            type=WhatsappMediaTypeEnum.image,
+            image=WhatsappResponseId(id=image.id),
+        )
+        message = self.send_message(text_message)
+        print(message)
         return None
 
     def upload_image(self, media_resource: WhatsappMediaResource):
-        files = {"file": (media_resource.name, open(media_resource.path, "rb"), media_resource.mime_type)}
+        file_name = os.path.basename(media_resource.path)
+        files = {"file": (file_name, open(media_resource.path, "rb"), media_resource.mime_type)}
         data = {"type": "image/png", "messaging_product": "whatsapp"}
         response = self._http_client.post(
-           f"/media",
-           data=data,
-           files=files)
+            f"/media",
+            data=data,
+            files=files)
         if response.status_code == 200:
             return WhatsappResponseId(**response.json())
         else:
             log.error(response.text)
             print(response.text)
             raise ImageUploadError("Error uploading the image")
-
-
-##def send_message(
-##        message_text, 
-##        recipient_number, 
-##        size=None, 
-##        message_type='text',
-##        preview_url=False
-##    ):
-##    """ Send a message and save the message metadata to the database
-##    """ 
-##    ## 
-##    url = f"https://graph.facebook.com/v16.0/{ACTIVE_NUMBER_ID}/messages"
-##    headers = {'Content-Type': 'application/json; charset=utf-8'}
-##    
-##
-##
-##    data = {
-##      "messaging_product": "whatsapp",
-##      "recipient_type": "individual",
-##      "to": recipient_number,
-##      "type": "image",
-##      "image": {
-##          }
-##      "text": { 
-##        "preview_url": preview_url,
-##        "body": message_chunk.encode('utf-8', 'replace').decode('utf-8')
-##        }
-##    }
-##    message_response = POST_meta_request(url, add_headers=headers, json=data)
-##    message = message_response['messages'][0]
-##    print(f"Message sent --> {message}")
-##
-##        contact = wat.ContactIN(
-##            wa_id=recipient_number,
-##        )
-##        user = uf.get_or_create_user(contact, ses)
-##
-##        ## Todos los mensajes de respuesta van a quedar con el mismo response to y ordenados por id (int)
-##        message['wasmid'] = message['id']
-##        message['timestamp'] = datetime.now().timestamp()
-##        message['type'] = message_type
-##        message['text'] = dict(body=message_text)
-##        message['response_to'] = response_to
-##        message['direction'] = 'outbound'
-##        
-##        ## Setup size
-##        if size is not None: message['size'] = size
-##        else: message['size'] = dict(size=len(message_text), units='chars')
-##
-##    return True
-
-
-# def _extract_coordinates(message):
-#     """ Extract coordinates from message
-#     """
-#     if "location" not in message:
-#         raise Exception("No location in message")
-#
-#     latitude = message['location']['latitude']
-#     longitude = message['location']['longitude']
-#     return latitude, longitude
 
 
 # def process_webhook(

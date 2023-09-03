@@ -109,7 +109,6 @@ class WhatsappMediaTypeEnum(str, Enum):
 
 
 class WhatsappMediaResource(BaseModel):
-    name: str
     path: str
     mime_type: MimeTypeEnum
     whatsapp_type: WhatsappMediaTypeEnum

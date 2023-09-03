@@ -75,7 +75,6 @@ def test_extract_latlong_from_text_message():
 
 def test_upload_image_function_ok(whatsapp_test_API):
     media_resource = WhatsappMediaResource(
-        name="mapita.png",
         path="/Users/ggarcia/git_sources/bicing_utils/mapita.png",
         mime_type=MimeTypeEnum.image_png,
         whatsapp_type=WhatsappMediaTypeEnum.image_png,
@@ -99,13 +98,10 @@ def test_send_whatsapp_message_OK(whatsapp_test_API):
     response = wc.send_message(text_message)
     assert len(response.messages) > 0
 
-# {
-#     "messaging_product": "whatsapp",
-#     "recipient_type": "individual",
-#     "to": "PHONE_NUMBER",
-#     "type": "text",
-#     "text": { // the text object
-#     "preview_url": false,
-#     "body": "MESSAGE_CONTENT"
-# }
-# }'
+def test_send_image_OK(whatsapp_test_API):
+    ## TODO: this test needs to be re-re,
+    wc = WhatsappClient()
+    wc._http_client = whatsapp_test_API
+    response = wc.send_image("/Users/ggarcia/git_sources/bicing_utils/mapita.png")
+    print(response)
+    assert 1 == 1
