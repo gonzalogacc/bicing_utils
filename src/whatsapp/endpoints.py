@@ -41,7 +41,8 @@ def GET_meta_hook(
     """
     wac = WhatsappClient()
     try:
-        return wac.verify_webhook(request.path_params)
+        print(request)
+        return wac.verify_webhook(request.query_params)
     except:
         raise HTTPException("verification error")
 
