@@ -1,34 +1,40 @@
-from get_station_info import get_stations
+from typing import List
+
+import httpx
 from geopy import distance
 
-def read_coordinates(coords_file: str):
-    with open(coords_file, 'r') as f:
-        data = f.read().strip()
-        return data.split(',')
+from src.schemas import Coordinates, BicingStationsResponse, Station, ResourceEnum
 
-def get_station_dict():
-    stations = get_stations()
-    station_dict = {}
-    for station in stations['stations']:
-        station_dict[station['id']] = station
-    return station_dict
 
-def get_closer_station(stations: {}, lat: float, lon: float):
-    
-    sation_distances = []
-    for id, station in stations.items():
-        dd = distance.distance((lat, lon), (station['latitude'], station['longitude'])).m
-        sation_distances.append((station['id'], dd))
+class BicingClient:
 
-    station_distances = sorted(sation_distances, key=lambda x: x[1])
-    return station_distances
+    def __init__(self):
+        self._httpx_client = httpx.Client(
+            base_url="https://www.bicing.barcelona",
+            headers={}
+        )
 
-if __name__ == '__main__':
-    lat, lon = read_coordinates("./coordinates.txt")
-    stations = get_station_dict()
-    close_stations = get_closer_station(stations, lat, lon)
+    def get_stations(self):
+        response = self._httpx_client.get("/es/get-stations")
+        print(response)
+        assert response.status_code == 200
+        return BicingStationsResponse(**response.json())
 
-    for id, dist in close_stations[:10]:
-        if stations[id]['electrical_bikes'] == 0:
-            continue
-        print(f"La estación {id} está a {dist:.1f} metros y tiene {stations[id]['electrical_bikes']} bicis eléctricas, Direccion: {stations[id]['streetName']}")
+    def get_sort_station_distance(self, coordinates: Coordinates) -> List[Station]:
+        stations = self.get_stations().stations
+        for station in stations:
+            dd = distance.distance(
+                (coordinates.latitude, coordinates.longitude),
+                (station.latitude, station.longitude)
+            )
+            station.distance = dd
+        return sorted(stations, key=lambda x: x.distance)
+
+    def find_closest(self, entity: ResourceEnum, coordinates: Coordinates, max_stations: int = 20) -> List[Station]:
+        all_stations = self.get_sort_station_distance(coordinates)
+        selected_stations = []
+        for station in all_stations[:max_stations]:
+            if getattr(station, entity) == 0:
+                continue
+            selected_stations.append(station)
+        return selected_stations

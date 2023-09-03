@@ -4,12 +4,19 @@ version = "0.1.0"
 description = ""
 authors = ["gonzalogacc <gonzalogacc@gmail.com>"]
 readme = "README.md"
-packages = [{include = "bicing_utils"}]
+#packages = [{include = "bicing_utils"}]
 
 [tool.poetry.dependencies]
 python = "^3.9"
 requests = "^2.28.2"
 geopy = "^2.3.0"
+python-dotenv = "^1.0.0"
+fastapi = "^0.100.1"
+uvicorn = "^0.23.1"
+google-cloud-pubsub = "^2.18.1"
+httpx = "^0.24.1"
+pytest = "^7.4.0"
+google = "^3.0.0"
 
 
 [build-system]
