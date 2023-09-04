@@ -1,6 +1,6 @@
 # bicing_utils
 
-## Get the closest station with an ebike
+## Get the closest station with an ebike via whatsapp message
 ```
-python src/bicing.py
+share your location with the bot to get the map
 ```
