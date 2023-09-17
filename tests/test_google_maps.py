@@ -1,5 +1,5 @@
 import pytest
-from src.google_maps import Marker, MapConf, _compose_markers
+from src.google_maps import Marker, MapConf, _compose_markers, get_static_map, MarkerTypeEnum
 
 
 def test_marker_OK():
@@ -37,3 +37,19 @@ def test__compose_markers():
     murl = _compose_markers([m1, m2])
 
     assert (1 == 1)
+
+
+def test_create_mapita():
+    response = get_static_map(
+        markers=[
+            Marker(latitude=41.381, longitude=2.181, marker_type=MarkerTypeEnum.own, label="2"),
+            Marker(latitude=41.38, longitude=2.18, label="2", marker_type=MarkerTypeEnum.station),
+            Marker(latitude=41.3805, longitude=2.1805, label="3", marker_type=MarkerTypeEnum.station)
+        ])
+
+    # filename = "mapita.png"
+    # with open(f'{filename}', 'wb') as outfile:
+    #     outfile.write(response)
+    print(response)
+
+    assert 1==1

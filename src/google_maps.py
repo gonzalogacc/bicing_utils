@@ -1,4 +1,5 @@
 import uuid
+from enum import Enum
 
 import requests
 from dataclasses import dataclass
@@ -17,13 +18,23 @@ if GMAP_API_KEY is None:
     raise Exception("No api key")
 
 
+class MarkerTypeEnum(str, Enum):
+    station = 'station'
+    own = 'own'
+
 class Marker:
-    def __init__(self, *, latitude, longitude, **kwargs):
+    def __init__(self, *, latitude: float, longitude: float, marker_type: MarkerTypeEnum, **kwargs):
         self.latitude = latitude
         self.longitude = longitude
+        self.marker_type = marker_type
+        self.style = {}
 
         ## Set default values for markers
-        self.style = {"size": "mid", "color": "red"}
+        if self.marker_type == MarkerTypeEnum.own:
+            self.style = {"size": "mid", "color": "blue"}
+        else:
+            self.style = {"size": "mid", "color": "red"}
+
         valid_args = ["size", "color", "label"]
         for k, v in kwargs.items():
             if k not in valid_args:
@@ -51,7 +62,7 @@ class MapConf:
         return f"&{urllib.parse.urlencode(self.params_dict)}"
 
 
-def get_static_map(markers=[]):
+def get_static_map(markers=List[Marker]):
     base_url = "https://maps.googleapis.com"
     url_path = "/maps/api/staticmap"
 

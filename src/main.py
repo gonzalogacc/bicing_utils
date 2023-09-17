@@ -3,7 +3,7 @@ import os
 from geopy import distance
 
 from src.bicing import BicingClient
-from src.google_maps import Marker, get_static_map
+from src.google_maps import Marker, get_static_map, MarkerTypeEnum
 from src.schemas import Coordinates, ResourceEnum
 
 
@@ -19,9 +19,9 @@ if __name__ == '__main__':
     bc = BicingClient()
     stations = bc.find_closest(ResourceEnum.electrical_bikes, coords)
 
-    markers = []
+    markers = [Marker(latitude=coords.latitude, longitude=coords.longitude, marker_type=MarkerTypeEnum.own)]
     for station in stations:
-        markers.append(Marker(latitude=station.latitude, longitude=station.longitude, label=station.electrical_bikes))
+        markers.append(Marker(latitude=station.latitude, longitude=station.longitude, marker_type=MarkerTypeEnum.station, label=station.electrical_bikes))
 
     response = get_static_map(markers=markers)
     filename = "mapita.png"

@@ -78,7 +78,7 @@ async def meta_hook(
     json_data = json.loads(decoded_data)
     print("--------------------------------------------------")
 
-    ## Todo process the extra messages whatsapp send after a message
+    ## TODO: process the extra messages whatsapp send after a message
     try:
         print("----- MESSAGE WEBHOOK -----")
         wc = WhatsappClient()
