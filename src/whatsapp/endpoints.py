@@ -8,7 +8,7 @@ import os
 from google.cloud import pubsub_v1
 
 from src.bicing import BicingClient
-from src.google_maps import get_static_map, Marker
+from src.google_maps import get_static_map, Marker, MarkerTypeEnum
 from src.schemas import ResourceEnum
 from src.whatsapp.whatsapp import WhatsappClient
 
@@ -88,7 +88,8 @@ async def meta_hook(
         bc = BicingClient()
         stations = bc.find_closest(ResourceEnum.electrical_bikes, coordinates)
 
-        bikes = [Marker(latitude=station.latitude, longitude=station.longitude, label=station.electrical_bikes) for station in stations]
+        bikes = [Marker(latitude=station.latitude, longitude=station.longitude, label=station.electrical_bikes, marker_type=MarkerTypeEnum.station) for station in stations]
+        bikes.append(Marker(longitude=coordinates.longitude, latitude=coordinates.latitude, marker_type=MarkerTypeEnum.own))
         outfile = get_static_map(markers=bikes)
         wc.send_image(user.wa_id, outfile)
 
